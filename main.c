@@ -13,6 +13,10 @@ static int compare(const void *a, const void *b) {
 }
 
 static void node_draw(rbnode_s *self, SDL_Renderer *renderer, int xres, int x, int y, int width) {
+    if (!self) {
+        return;
+    }
+
     SDL_Event e;
     SDL_PollEvent(&e);
     if(e.type == SDL_QUIT)
@@ -23,9 +27,11 @@ static void node_draw(rbnode_s *self, SDL_Renderer *renderer, int xres, int x, i
     int xb = x + half;
     int ya = y + 24;
     bool red = rbnode_is_red(self);
+
     SDL_SetRenderDrawColor(renderer, red ? 0xFF : 0x00, 0x00, 0x00, 0xFF);
     SDL_RenderDrawLine(renderer, x, y, xa, ya);
     SDL_RenderDrawLine(renderer, x, y, xb, ya);
+
     if (self->kids[0]) {
         node_draw(self->kids[0], renderer, xres, xa, ya, half);
     }
@@ -37,15 +43,15 @@ static void node_draw(rbnode_s *self, SDL_Renderer *renderer, int xres, int x, i
 static void render(SDL_Renderer* renderer, int xres, int yres, rbtree_s *t) {
     SDL_SetRenderDrawColor(renderer, 0xC8, 0xC8, 0xC8, 0xFF);
     SDL_RenderClear(renderer);
-    node_draw(t->head, renderer, xres / 1, xres / 2, yres / 4, xres / 3);
+    node_draw(t->root, renderer, xres / 1, xres / 2, yres / 4, xres / 3);
     SDL_RenderPresent(renderer);
-    SDL_Delay(1);
+    SDL_Delay(10);
 }
 
 int main(void) {
     int xres = 1024;
     int yres = 768;
-    int cycles = 4096;
+    int cycles = 512;
     srand(time(NULL));
 
     SDL_Init(SDL_INIT_VIDEO);
@@ -62,10 +68,18 @@ int main(void) {
         render(renderer, xres, yres, t);
     }
 
+    while(t->size) {
+        int *min_number = rbtree_pop_min(t);
+        printf("%d\n", *min_number);
+        free(min_number);
+        render(renderer, xres, yres, t);
+    }
+
     SDL_Delay(100);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
 
+    free(t);
     exit(EXIT_SUCCESS);
 }
